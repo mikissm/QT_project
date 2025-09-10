@@ -47,13 +47,13 @@ private:
     void updateHpUi();
 
     // --- 맵 ---
-    void buildRandomMap(quint32 seed, qreal W, qreal H);   // 랜덤 맵 생성(동기화된 seed)
-    void setupMiniMap();                                   // 미니맵(우상단) 설정
-    bool collidesBlockingPlayer(const QGraphicsEllipseItem* who) const; // 벽/물과 충돌?
-    bool bulletHitObstacle(QGraphicsEllipseItem* bulletItem) const;     // 벽/덤불과 충돌?
-    void updateHideOpacity();                               // 덤불 안에 있으면 투명도 조정
-    void updateMiniMapView();                               // 미니맵 fitInView 등
-    void updateMiniViewRect();                              // 메인뷰 시야 계산 → 미니맵 오버레이 갱신
+    void buildRandomMap(quint32 seed, qreal W, qreal H);
+    void setupMiniMap();
+    bool collidesBlockingPlayer(const QGraphicsEllipseItem* who) const;
+    bool bulletHitObstacle(QGraphicsEllipseItem* bulletItem) const;
+    void updateHideOpacity();
+    void updateMiniMapView();
+    void updateMiniViewRect();
 
     // --- 총알 ---
     void spawnBullet(const QString& kindOrName, const QPointF& start, const QPointF& target, bool fromPeer);
@@ -65,25 +65,24 @@ private:
     struct WeaponPickup {
         QGraphicsEllipseItem* item;
         enum class Kind { MULTI, 저격총, SHOTGUN } kind;
-        quint64 id; // 전역 유니크 ID
+        quint64 id;
     };
 
-    void spawnPickupLocal(quint64 id, WeaponPickup::Kind kind, const QPointF& pos); // 로컬에 생성
-    void removePickupById(quint64 id);                                              // 로컬에서 제거
-    static QString kindKeyFromPickupKind(WeaponPickup::Kind k);                     // "multi"/"sniper"/"shotgun"
+    void spawnPickupLocal(quint64 id, WeaponPickup::Kind kind, const QPointF& pos);
+    void removePickupById(quint64 id);
+    static QString kindKeyFromPickupKind(WeaponPickup::Kind k);
     static WeaponPickup::Kind pickupKindFromKey(const QString& key);
 
-    // ID 생성: (localPort << 32) | counter
     quint64 nextLocalDropId();
 
-    // 네트워킹
+    // --- 네트워킹 ---
     QUdpSocket* udp = nullptr;
     QHostAddress peerAddr;
     quint16 localPort = 0;
     quint16 peerPort  = 0;
     bool isHost       = false;
 
-    // UI / Scene
+    // --- UI / Scene ---
     Ui::MainWindow *ui = nullptr;
     QGraphicsScene* scene = nullptr;
 
@@ -108,9 +107,9 @@ private:
     bool mapReady = false;
     quint32 mapSeed = 0;
     qreal mapW = 0, mapH = 0;
-    std::vector<QGraphicsRectItem*> walls;     // 벽: 사람/총알 둘 다 막음
-    std::vector<QGraphicsEllipseItem*> waters; // 물: 사람만 막음(총알 통과)
-    std::vector<QGraphicsEllipseItem*> bushes; // 덤불: 사람 통과, 총알 막음(숨기)
+    std::vector<QGraphicsRectItem*> walls;
+    std::vector<QGraphicsEllipseItem*> waters;
+    std::vector<QGraphicsEllipseItem*> bushes;
     QPointF findSafeSpawn(qreal radius, int tries = 300) const;
     void    teleportPlayerTo(const QPointF& p, bool broadcast = true);
 
@@ -124,15 +123,15 @@ private:
     std::vector<WeaponPickup*> droppedWeapons;
     QHash<quint64, WeaponPickup*> pickupById;
     quint32 localDropCounter = 1;
-    QTimer* spawnTimer = nullptr; // 5초 타이머(호스트만 동작)
+    QTimer* spawnTimer = nullptr;
 
     // 총알 & HP
     struct Bullet {
         QGraphicsEllipseItem* item;
-        QPointF vel;          // 프레임당 이동(px/frame)
-        qreal remaining;      // 남은 사거리(px)
-        int damage;           // 데미지
-        bool fromPeer;        // true: 상대 탄(내가 맞음), false: 내 탄(상대가 맞음)
+        QPointF vel;
+        qreal remaining;
+        int damage;
+        bool fromPeer;
     };
     std::vector<Bullet*> bullets;
     QTimer* bulletTimer = nullptr;
@@ -144,15 +143,19 @@ private:
     qint64 myInvulnUntilMs = 0;
     QTimer* invulnBlinkTimer = nullptr;
     bool invulnBlinkOn = false;
-    QPen playerDefaultPen; // 기본 펜 저장(생성 시 채워줌)
+    QPen playerDefaultPen;
 
     void startMyInvulnerability(int ms = 2000);
 
-    // ---- 미니맵 전용 오버레이(새 헤더/서브클래스 없이) ----
-    QWidget* miniOverlay = nullptr; // 미니맵 viewport 위의 투명 오버레이
-    QRectF   visSceneRect;          // 메인뷰가 현재 보여주는 '씬 좌표' 사각형
+    // 미니맵 전용 오버레이
+    QWidget* miniOverlay = nullptr;
+    QRectF   visSceneRect;
 
-    bool gameOver = false;          // 중복 팝업 방지용
-    void resetGame(bool regenerateMap);  // 게임 리셋(맵 재생성 옵션)
-    void handleDeath(bool iAmDead);      // 죽음 처리(팝업 포함)
+    // --- 게임 상태 ---
+    bool gameOver = false;
+    bool isDead   = false;          // ✅ 추가됨
+
+    // --- 핵심 함수 ---
+    void resetGame(bool regenerateMap);
+    void handleDeath(bool iAmDead);
 };
